@@ -1,43 +1,35 @@
-name: CI Test for Calculator  
+name: CI Process
+run-name: ${{github.actor}} is learning Github Actions
+on: [push]
+jobs:
+  behave-testing:
+    # Setup of simple OS of choice
+    # Create VM with ubuntu OS
+    runs-on: ubuntu-latest
+    steps:
+    # Setup of environment for test
+      - name: Checkout
+        uses: actions/checkout@v4 
+      - name: List repo
+        run: |
+          ls
+          
+      # install python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13' 
 
-on:  
-  push:  
-    branches:  
-      - main  
-  pull_request:  
-    branches:  
-      - main  
+      # install behave
+      - name: Setup Behave
+        uses: BSFishy/pip-action@v1
+        with:
+          packages: |
+            behave
 
-jobs:  
-  test:  
-    runs-on: ubuntu-latest  # Use the latest Ubuntu environment  
-
-    steps:  
-      # Step 1: Checkout the repository  
-      - name: Checkout repository  
-        uses: actions/checkout@v3  
-
-      # Step 2: Setup Python environment  
-      - name: Setup Python  
-        uses: actions/setup-python@v4  
-        with:  
-          python-version: '3.9'  # Specify the Python version  
-
-      # Step 3: Install Behave using pip-install-package-action  
-      - name: Install Behave  
-        uses: durandtibo/pip-install-package-action@v0.3.1  
-        with:  
-          package-name: 'behave'  # The package name  
-          package-version: '1.2.0'  # Specify the version of Behave you want to install  
-          python-version: '3.9'  # Specify the Python version  
-
-      # Step 4: Check if features directory exists and run Behave tests  
-      - name: Run Tests  
-        run: |  
-          if [ -d "features" ]; then  
-            mkdir -p test-results  # Ensure the directory exists  
-            behave features/ --junit --junit-directory=test-results  # Run tests and save results  
-          else  
-            echo "Features directory not found!"  
-            exit 1  # Exit with an error if the directory does not exist  
-          fi
+      # Run behave
+      - name: Run behave test
+        uses: cryptic-wizard/run-behave-tests@v0.4.0
+        with:
+          test-output-name: results.txt
+                
