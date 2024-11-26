@@ -23,11 +23,13 @@ jobs:
         with:  
           python-version: '3.9'  # Specify the Python version  
 
-      # Step 3: Install dependencies  
-      - name: Install dependencies  
-        run: |  
-          python -m pip install --upgrade pip  
-          pip install behave  # Install Behave  
+      # Step 3: Install Behave using pip-install-package-action  
+      - name: Install Behave  
+        uses: durandtibo/pip-install-package-action@v0.3.1  
+        with:  
+          package-name: 'behave'  # The package name  
+          package-version: '1.2.0'  # Specify the version of Behave you want to install  
+          python-version: '3.9'  # Specify the Python version  
 
       # Step 4: Check if features directory exists and run Behave tests  
       - name: Run Tests  
