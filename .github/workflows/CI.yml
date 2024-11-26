@@ -1,38 +1,70 @@
-name: Run commands on different operating systems
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+name: CI Test (Behave) Pipeline  
 
-jobs:
-  Run-npm-on-Ubuntu:
-    name: Run npm on Ubuntu
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '14'
-      - run: npm help
+on:  
+  push:  
+    branches:  
+      - main  
+  pull_request:  
+    branches:  
+      - main  
 
-  Run-PSScriptAnalyzer-on-Windows:
-    name: Run PSScriptAnalyzer on Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install PSScriptAnalyzer module
-        shell: pwsh
-        run: |
-          Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer -ErrorAction Stop
-      - name: Get list of rules
-        shell: pwsh
-        run: |
-          Get-ScriptAnalyzerRule
+jobs:  
+  behave-tests:  
+    runs-on: ubuntu-latest  # Use Linux OS  
+    permissions:  
+      issues: write  
+      checks: write  
+      pull-requests: write  
 
-          Install-Module PSScriptAnalyzer -ErrorAction Stop
-      - name: Get list of rules
-        shell: pwsh
-        run: |
-          Get-ScriptAnalyzerRule
+    steps:  
+      # Step 1: Checkout the repository  
+      - name: Checkout repository  
+        uses: actions/checkout@v3  
+        with:  
+          fetch-depth: 0  # Ensure full history is fetched  
+
+      # Step 2: Setup Python environment  
+      - name: Setup Python  
+        uses: actions/setup-python@v4  
+        with:  
+          python-version: '3.9'  # Specify the Python version  
+
+      # Step 3: Install dependencies  
+      - name: Install dependencies  
+        run: |  
+          python -m pip install --upgrade pip  
+          pip install behave  
+
+      # Step 4: Run Tests from the features folder  
+      - name: Run Tests  
+        run: |  
+          mkdir -p test-results  # Ensure the directory exists  
+          behave features/ --junit --junit-directory=test-results  # Specify the features folder and save results to test-results  
+
+      # Step 5: Upload Test results  
+      - name: Upload Test Results  
+        uses: actions/upload-artifact@v2  
+        with:  
+          name: test-results  
+          path: test-results  
+
+      # Step 6: Publish Test Results  
+      - name: Publish Test Results  
+        uses: peaceiris/actions-gh-pages@v3  
+        with:  
+          github_token: ${{ secrets.GITHUB_TOKEN }}  
+          publish_dir: test-results  
+
+      # Step 7: Create Issue  
+      - name: Create an Issue  
+        uses: peter-evans/create-issue@v2  
+        with:  
+          title: 'CI Test Failures'  
+          body: 'There were test failures in the CI pipeline.'  
+          labels: 'bug'  
+
+      # Step 8: Annotate Test Failures (optional)  
+      - name: Annotate Test Failures  
+        if: failure()  # Only run if previous steps failed  
+        run: |  
+          echo "There were test failures. Please check the logs."
