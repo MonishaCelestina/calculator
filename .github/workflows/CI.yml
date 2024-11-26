@@ -41,30 +41,25 @@ jobs:
           mkdir -p test-results  # Ensure the directory exists  
           behave features/ --junit --junit-directory=test-results  # Specify the features folder and save results to test-results  
 
-      # Step 5: Upload Test results  
+      # Step 5: Upload Test Results  
       - name: Upload Test Results  
-        uses: actions/upload-artifact@v2  
+        uses: actions/upload-artifact@v3  # Updated to v3  
         with:  
           name: test-results  
-          path: test-results  
+          path: test-results/*.xml  # Adjust this if your results are in a different format or location  
 
       # Step 6: Publish Test Results  
       - name: Publish Test Results  
         uses: peaceiris/actions-gh-pages@v3  
         with:  
           github_token: ${{ secrets.GITHUB_TOKEN }}  
-          publish_dir: test-results  
+          publish_dir: test-results  # Directory containing the test results  
 
-      # Step 7: Create Issue  
-      - name: Create an Issue  
-        uses: peter-evans/create-issue@v2  
+      # Step 7: Create Issue for Test Failures  
+      - name: Create Issue for Test Failures  
+        if: failure()  # Only run if previous steps failed  
+        uses: peter-evans/create-issue@v3  # Updated to v3  
         with:  
           title: 'CI Test Failures'  
           body: 'There were test failures in the CI pipeline.'  
-          labels: 'bug'  
-
-      # Step 8: Annotate Test Failures (optional)  
-      - name: Annotate Test Failures  
-        if: failure()  # Only run if previous steps failed  
-        run: |  
-          echo "There were test failures. Please check the logs."
+          labels: 'bug'
